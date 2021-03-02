@@ -88,7 +88,16 @@ available for you to run this library.
 
 We use a configuration file called _wskprop_ to specify all the parameters necessary for this Go client library to access the OpenWhisk services. Make sure you create or edit the file _~/.wskprops_, and add the mandatory parameters APIHOST, APIVERSION, NAMESPACE and AUTH.
 
-- The parameter `APIHOST` is the OpenWhisk API hostname (for example, openwhisk.ng.bluemix.net, 172.17.0.1, and so on).
+- The parameter `APIHOST` is the OpenWhisk API hostname.
+
+    Examples hostnames:
+
+    - [Quick Start Standalone OpenWhisk Services](https://github.com/apache/openwhisk#quick-start): 
+      if you are using a local standalone OpenWhisk services APIHOST will look like `http://localhost:3233`
+
+    - Cloud Hosted OpenWhisk Services: 
+      if you are using IBM cloud function APIHOST will look like `<region>.functions.cloud.ibm.com` where region can be `us-east`, `us-south` or any additional [regions](https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-cloudfunctions_regions)
+
 - The parameter `APIVERSION` is the version of OpenWhisk API to be used to access the OpenWhisk resources.
 - The parameter `NAMESPACE` is the OpenWhisk namespace used to specify the OpenWhisk resources about to be accessed.
 - The parameter `AUTH` is the authentication key used to authenticate the incoming requests to the OpenWhisk services.
@@ -101,23 +110,23 @@ For more information regarding the REST API of OpenWhisk, please refer to [OpenW
 import "github.com/apache/openwhisk-client-go/whisk"
 ```
 
-Construct a new whisk client, then use various services to access different parts of the whisk api.  For example to get the `hello` action:
+Construct a new whisk client, then use various services to access different parts of the whisk api.  For example to get the `hello` package actions:
 
 ```go
 client, _ := whisk.NewClient(http.DefaultClient, nil)
-action, resp, err := client.Actions.List("hello")
+actions, resp, err := client.Actions.List("hello", nil)
 ```
 
-Some API methods have optional parameters that can be passed. For example, to list the first 30 actions, after the 30th action:
+Some API methods have optional parameters that can be passed. For example, to list the first 10 actions of the `hello` package:
 ```go
 client, _ := whisk.NewClient(http.DefaultClient, nil)
 
 options := &whisk.ActionListOptions{
-  Limit: 30,
-  Skip: 30,
+  Limit: 10,
+  Skip: 0,
 }
 
-actions, resp, err := client.Actions.List(options)
+actions, resp, err := client.Actions.List("hello", options)
 ```
 
 By default, this Go client library is automatically configured by the configuration file _wskprop_. The parameters of APIHOST, APIVERSION,
@@ -127,22 +136,25 @@ In addition, it can also be configured by passing in a `*whisk.Config` object as
 
 ```go
 config := &whisk.Config{
-  Host: "openwhisk.ng.bluemix.net",
-  Version: "v1"
-  Namespace: "_",
-  AuthKey: "aaaaa-bbbbb-ccccc-ddddd-eeeee"
+  Host: "<APIHOST>", 
+  Version: "<APIVERSION>",
+  Namespace: "<NAMESPACE>",
+  AuthToken: "<AUTH>",
 }
 client, err := whisk.Newclient(http.DefaultClient, config)
 ```
 
 ### Example
 
-You need to have an OpenWhisk service accessible, to run the following example.
+You need to have an OpenWhisk service accessible, to run the following [example](https://github.com/apache/openwhisk-client-go/blob/master/example/example_list_actions.go).
 
 ```go
+package main
+
 import (
+  "os"
+  "fmt"
   "net/http"
-  "net/url"
 
   "github.com/apache/openwhisk-client-go/whisk"
 )
@@ -155,18 +167,18 @@ func main() {
   }
 
   options := &whisk.ActionListOptions{
-    Limit: 30,
-    Skip: 30,
+    Limit: 10,
+    Skip: 0,
   }
 
-  actions, resp, err := client.Actions.List(options)
+  actions, resp, err := client.Actions.List("", options)
   if err != nil {
     fmt.Println(err)
     os.Exit(-1)
   }
 
   fmt.Println("Returned with status: ", resp.Status)
-  fmt.Println("Returned actions: \n%+v", actions)
+  fmt.Printf("Returned actions: \n%+v", actions)
 
 }
 ```
